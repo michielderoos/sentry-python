@@ -370,6 +370,24 @@ class AnnotatedValue(object):
             },
         )
 
+    @classmethod
+    def substituted_because_contains_sensitive_data(cls):
+        # type: () -> AnnotatedValue
+        """The actual value was removed because it contained sensitive information."""
+        from sentry_sdk.consts import SENSITIVE_DATA_SUBSTITUTE
+
+        return AnnotatedValue(
+            value=SENSITIVE_DATA_SUBSTITUTE,
+            metadata={
+                "rem": [  # Remark
+                    [
+                        "!config",  # Because of SDK configuration (in this case the config is the hard coded removal of certain django cookies)
+                        "s",  # The fields original value was substituted
+                    ]
+                ]
+            },
+        )
+
 
 if MYPY:
     from typing import TypeVar
@@ -755,8 +773,8 @@ def handle_in_app(event, in_app_exclude=None, in_app_include=None):
     return event
 
 
-def handle_in_app_impl(frames, in_app_exclude, in_app_include):
-    # type: (Any, Optional[List[str]], Optional[List[str]]) -> Optional[Any]
+def handle_in_app_impl(frames, in_app_exclude, in_app_include, default_in_app=True):
+    # type: (Any, Optional[List[str]], Optional[List[str]], bool) -> Optional[Any]
     if not frames:
         return None
 
@@ -777,7 +795,7 @@ def handle_in_app_impl(frames, in_app_exclude, in_app_include):
         elif _module_in_set(module, in_app_exclude):
             frame["in_app"] = False
 
-    if not any_in_app:
+    if default_in_app and not any_in_app:
         for frame in frames:
             if frame.get("in_app") is None:
                 frame["in_app"] = True

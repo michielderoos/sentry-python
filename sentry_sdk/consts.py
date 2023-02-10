@@ -44,6 +44,8 @@ if MYPY:
 DEFAULT_QUEUE_SIZE = 100
 DEFAULT_MAX_BREADCRUMBS = 100
 
+SENSITIVE_DATA_SUBSTITUTE = "[Filtered]"
+
 
 class INSTRUMENTER:
     SENTRY = "sentry"
@@ -70,6 +72,8 @@ class OP:
     QUEUE_SUBMIT_CELERY = "queue.submit.celery"
     QUEUE_TASK_CELERY = "queue.task.celery"
     QUEUE_TASK_RQ = "queue.task.rq"
+    QUEUE_SUBMIT_HUEY = "queue.submit.huey"
+    QUEUE_TASK_HUEY = "queue.task.huey"
     SUBPROCESS = "subprocess"
     SUBPROCESS_WAIT = "subprocess.wait"
     SUBPROCESS_COMMUNICATE = "subprocess.communicate"
@@ -142,4 +146,4 @@ DEFAULT_OPTIONS = _get_default_options()
 del _get_default_options
 
 
-VERSION = "1.13.0"
+VERSION = "1.15.0"

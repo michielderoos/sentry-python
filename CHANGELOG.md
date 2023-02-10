@@ -1,5 +1,115 @@
 # Changelog
 
+## 1.15.0
+
+### Various fixes & improvements
+
+- New: Add [Huey](https://huey.readthedocs.io/en/latest/) Integration (#1555) by @Zhenay
+
+  This integration will create performance spans when Huey tasks will be enqueued and when they will be executed.
+
+  Usage:
+
+  Task definition in `demo.py`:
+
+  ```python
+  import time
+
+  from huey import SqliteHuey, crontab
+
+  import sentry_sdk
+  from sentry_sdk.integrations.huey import HueyIntegration
+
+  sentry_sdk.init(
+      dsn="...",
+      integrations=[
+          HueyIntegration(),
+      ],
+      traces_sample_rate=1.0,
+  )
+
+  huey = SqliteHuey(filename='/tmp/demo.db')
+
+  @huey.task()
+  def add_numbers(a, b):
+      return a + b
+  ```
+
+  Running the tasks in `run.py`:
+
+  ```python
+  from demo import add_numbers, flaky_task, nightly_backup
+
+  import sentry_sdk
+  from sentry_sdk.integrations.huey import HueyIntegration
+  from sentry_sdk.tracing import TRANSACTION_SOURCE_COMPONENT, Transaction
+
+
+  def main():
+      sentry_sdk.init(
+          dsn="...",
+          integrations=[
+              HueyIntegration(),
+          ],
+          traces_sample_rate=1.0,
+      )
+
+      with sentry_sdk.start_transaction(name="testing_huey_tasks", source=TRANSACTION_SOURCE_COMPONENT):
+          r = add_numbers(1, 2)
+
+  if __name__ == "__main__":
+      main()
+  ```
+
+- Profiling: Do not send single sample profiles (#1879) by @Zylphrex
+- Profiling: Add additional test coverage for profiler (#1877) by @Zylphrex
+- Profiling: Always use builtin time.sleep (#1869) by @Zylphrex
+- Profiling: Defaul in_app decision to None (#1855) by @Zylphrex
+- Profiling: Remove use of threading.Event (#1864) by @Zylphrex
+- Profiling: Enable profiling on all transactions (#1797) by @Zylphrex
+- FastAPI: Fix check for Starlette in FastAPI integration (#1868) by @antonpirker
+- Flask: Do not overwrite default for username with email address in FlaskIntegration (#1873) by @homeworkprod
+- Tests: Add py3.11 to test-common (#1871) by @Zylphrex
+- Fix: Don't log whole event in before_send / event_processor drops (#1863) by @sl0thentr0py
+
+## 1.14.0
+
+### Various fixes & improvements
+
+- Add `before_send_transaction` (#1840) by @antonpirker
+
+  Adds a hook (similar to `before_send`) that is called for all transaction events (performance releated data).
+
+  Usage:
+
+  ```python
+    import sentry_sdk
+
+    def strip_sensitive_data(event, hint):
+        # modify event here (or return `None` if you want to drop the event entirely)
+        return event
+
+    sentry_sdk.init(
+        # ...
+        before_send_transaction=strip_sensitive_data,
+    )
+  ```
+
+  See also: https://docs.sentry.io/platforms/python/configuration/filtering/#using-platformidentifier-namebefore-send-transaction-
+
+- Django: Always remove values of Django session related cookies. (#1842) by @antonpirker
+- Profiling: Enable profiling for ASGI frameworks (#1824) by @Zylphrex
+- Profiling: Better gevent support (#1822) by @Zylphrex
+- Profiling: Add profile context to transaction (#1860) by @Zylphrex
+- Profiling: Use co_qualname in python 3.11 (#1831) by @Zylphrex
+- OpenTelemetry: fix Use dict for sentry-trace context instead of tuple (#1847) by @AbhiPrasad
+- OpenTelemetry: fix extra dependency (#1825) by @bernardotorres
+- OpenTelemetry: fix NoOpSpan updates scope (#1834) by @Zylphrex
+- OpenTelemetry: Make sure to noop when there is no DSN (#1852) by @antonpirker
+- FastAPI: Fix middleware being patched multiple times (#1841) by @JohnnyDeuss
+- Starlette: Avoid import of pkg_resource with Starlette integration (#1836) by @mgu
+- Removed code coverage target (#1862) by @antonpirker
+
 ## 1.13.0
 
 ### Various fixes & improvements
